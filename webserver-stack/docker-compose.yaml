@@ -1,0 +1,105 @@
+services:
+  # Nginx Proxy Manager
+  nginx:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+      - 81:81
+    environment:
+      TZ: America/Chicago
+    volumes:
+      - /path/to/nginx/data:/data
+      - /path/to/letsencrypt:/etc/letsencrypt
+  
+  # Cloudflared Tunnel 1
+  cloudflared1:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared1
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token <tunnel token>
+    
+  # Cloudflared Tunnel 2
+  cloudflared2:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared2
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token <tunnel token>
+  
+  # Apache
+  apache-php:
+    image: thecodingmachine/php:8.4-v5-apache
+    container_name: apache-php
+    restart: unless-stopped
+    volumes:
+      - /path/to/www:/var/www/html
+    depends_on:
+      - nginx
+
+  # MariaDB Service
+  mariadb:
+    image: mariadb:latest
+    restart: unless-stopped
+    container_name: mariadb
+    #ports:
+    #  -3306:3306
+    volumes:
+      - /path/to/mariadb_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: <root password>
+      MYSQL_DATABASE: <database>
+      MYSQL_USER: <user>
+      MYSQL_PASSWORD: <user password>
+
+  # phpMyAdmin Service
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: unless-stopped
+    container_name: phpmyadmin
+    #ports:
+    #  - 8080:8080
+    environment:
+      PMA_HOST: mariadb
+      PMA_USER: root
+      PMA_PASSWORD: <root password>
+      PMA_ARBITRARY: 1
+    depends_on:
+      - mariadb
+
+  # DDNS Updater Service
+  ddns-updater:
+    image: qmcgaw/ddns-updater
+    container_name: ddns-updater
+    restart: unless-stopped
+    #ports:
+    #  - 8088:8088
+    environment:
+    - CONFIG=
+    - PERIOD=5m
+    - UPDATE_COOLDOWN_PERIOD=5m
+    - PUBLICIP_FETCHERS=all
+    - PUBLICIP_HTTP_PROVIDERS=all
+    - PUBLICIPV4_HTTP_PROVIDERS=all
+    - PUBLICIPV6_HTTP_PROVIDERS=all
+    - PUBLICIP_DNS_PROVIDERS=all
+    - PUBLICIP_DNS_TIMEOUT=3s
+    - HTTP_TIMEOUT=10s
+    # Web UI
+    - LISTENING_ADDRESS=:8088
+    - ROOT_URL=/
+    # Backup
+    - BACKUP_PERIOD=0 # 0 to disable
+    - BACKUP_DIRECTORY=/updater/data
+    # Other
+    - LOG_LEVEL=info
+    - LOG_CALLER=hidden
+    - SHOUTRRR_ADDRESSES=
+    volumes:
+      - /path/to/ddns-updater:/updater/data
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
