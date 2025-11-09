@@ -34,7 +34,7 @@ services:
     container_name: apache-php
     restart: unless-stopped
     volumes:
-      - /path/to/www:/var/www/html
+      - /path/to/www:/var/www
     depends_on:
       - nginx
 
