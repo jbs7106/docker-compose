@@ -1,7 +1,7 @@
 services:
   # Nginx Proxy Manager
   nginx:
-    image: jc21/nginx-proxy-manager:latest
+    image: jc21/nginx-proxy-manager
     container_name: nginx
     restart: unless-stopped
     ports:
@@ -14,17 +14,10 @@ services:
       - /path/to/nginx/data:/data
       - /path/to/letsencrypt:/etc/letsencrypt
   
-  # Cloudflared Tunnel 1
-  cloudflared1:
-    image: cloudflare/cloudflared:latest
+  # Cloudflared Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared
     container_name: cloudflared1
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run --token <tunnel token>
-    
-  # Cloudflared Tunnel 2
-  cloudflared2:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared2
     restart: unless-stopped
     command: tunnel --no-autoupdate run --token <tunnel token>
   
@@ -40,7 +33,7 @@ services:
 
   # MariaDB Service
   mariadb:
-    image: mariadb:latest
+    image: mariadb
     container_name: mariadb
     restart: unless-stopped
     #ports:
